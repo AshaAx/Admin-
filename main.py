@@ -60,10 +60,21 @@ YDL_OPTS_VIDEO = {
 
 # ============= HELPER FUNCTIONS =============
 
-def download_youtube_audio(url: str) -> Optional[str]:
+def escape_html(text: str) -> str:
+    """Escape HTML special characters"""
+    html_escape_table = {
+        "&": "&amp;",
+        '"': "&quot;",
+        "'": "&apos;",
+        ">": "&gt;",
+        "<": "&lt;",
+    }
+    return "".join(html_escape_table.get(c, c) for c in text)
+
+def download_youtube_audio(url: str) -> Optional[Tuple[str, str, str]]:
     """
     Download YouTube video as MP3 audio
-    Returns: Path to downloaded file or None if failed
+    Returns: (file_path, song_name, channel_name) or None
     """
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as tmp_file:
@@ -87,10 +98,10 @@ def download_youtube_audio(url: str) -> Optional[str]:
         print(f"Audio download error: {e}")
         return None, None, None
 
-def download_youtube_video(url: str) -> Optional[str]:
+def download_youtube_video(url: str) -> Optional[Tuple[str, str, str]]:
     """
     Download YouTube video as MP4
-    Returns: Path to downloaded file or None if failed
+    Returns: (file_path, video_title, channel_name) or None
     """
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
@@ -116,7 +127,7 @@ def download_youtube_video(url: str) -> Optional[str]:
 def download_tiktok_video(url: str) -> Optional[Tuple[str, str]]:
     """
     Download TikTok video without watermark
-    Returns: Path to downloaded file and username or None
+    Returns: (file_path, author) or None
     """
     try:
         # TikTok downloader using yt-dlp (supports watermark removal)
@@ -163,16 +174,16 @@ def send_welcome(message):
     markup.add(commands_button)
     
     welcome_text = f"""
-{EMOJIS['youtube']}{EMOJIS['music']}{EMOJIS['video']} **PROFESSIONAL MEDIA DOWNLOADER** {EMOJIS['tiktok']}{EMOJIS['download']}
+{EMOJIS['youtube']}{EMOJIS['music']}{EMOJIS['video']} <b>PROFESSIONAL MEDIA DOWNLOADER</b> {EMOJIS['tiktok']}{EMOJIS['download']}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✨ **Bot Name:** Ultimate Media Downloader
-🎯 **Version:** 2.0 Professional
+✨ <b>Bot Name:</b> Ultimate Media Downloader
+🎯 <b>Version:</b> 2.0 Professional
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**🌟 Features:**
+<b>🌟 Features:</b>
 {EMOJIS['music']} YouTube → MP3 Audio Download
 {EMOJIS['video']} YouTube → MP4 Video Download  
 {EMOJIS['tiktok']} TikTok Video (No Watermark)
@@ -181,58 +192,58 @@ def send_welcome(message):
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**💡 How to Use:**
+<b>💡 How to Use:</b>
 Simply send any command followed by the URL:
-`/song youtube_url`
-`/ytvideo youtube_url`
-`/ttvideo tiktok_url`
+<code>/song youtube_url</code>
+<code>/ytvideo youtube_url</code>
+<code>/ttvideo tiktok_url</code>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{EMOJIS['owner']} **Owner:** @Nobody_ax
-{EMOJIS['info']} **Support:** Click the button below for commands
+{EMOJIS['owner']} <b>Owner:</b> @Nobody_ax
+{EMOJIS['info']} <b>Support:</b> Click the button below for commands
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
     
-    bot.reply_to(message, welcome_text, parse_mode='Markdown', reply_markup=markup)
+    bot.reply_to(message, welcome_text, parse_mode='HTML', reply_markup=markup)
 
 @bot.message_handler(func=lambda message: message.text == "𝘼𝙇𝙇 𝘾𝙤𝙢𝙢𝙖𝙣𝙙'𝙨 - 📋")
 def send_commands_list(message):
     """Send all available commands in stylish format"""
     commands_text = f"""
-{EMOJIS['command']} **AVAILABLE COMMANDS** {EMOJIS['command']}
+{EMOJIS['command']} <b>AVAILABLE COMMANDS</b> {EMOJIS['command']}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{EMOJIS['music']} **/song** `[youtube_url]`
+{EMOJIS['music']} <b>/song</b> <code>[youtube_url]</code>
 ➥ Download YouTube video as high-quality MP3
-📝 Example: `/song https://youtube.com/watch?v=...`
+📝 Example: <code>/song https://youtube.com/watch?v=...</code>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{EMOJIS['video']} **/ytvideo** `[youtube_url]`
+{EMOJIS['video']} <b>/ytvideo</b> <code>[youtube_url]</code>
 ➥ Download YouTube video as MP4 (720p)
-📝 Example: `/ytvideo https://youtube.com/watch?v=...`
+📝 Example: <code>/ytvideo https://youtube.com/watch?v=...</code>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{EMOJIS['tiktok']} **/ttvideo** `[tiktok_url]`
+{EMOJIS['tiktok']} <b>/ttvideo</b> <code>[tiktok_url]</code>
 ➥ Download TikTok video (No watermark)
-📝 Example: `/ttvideo https://tiktok.com/@user/video/...`
+📝 Example: <code>/ttvideo https://tiktok.com/@user/video/...</code>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**⚠️ Notes:**
+<b>⚠️ Notes:</b>
 • Maximum file size: 50MB (Telegram limit)
 • Processing time depends on file size
 • Some TikTok videos may still have watermarks
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{EMOJIS['owner']} **Developer:** @Nobody_ax
+{EMOJIS['owner']} <b>Developer:</b> @Nobody_ax
 """
-    bot.reply_to(message, commands_text, parse_mode='Markdown')
+    bot.reply_to(message, commands_text, parse_mode='HTML')
 
 @bot.message_handler(commands=['song'])
 def handle_song(message):
@@ -243,8 +254,8 @@ def handle_song(message):
         if len(command_parts) < 2:
             bot.reply_to(
                 message,
-                f"{EMOJIS['warning']} **Usage:** `/song youtube_url`\n\nExample: `/song https://youtube.com/watch?v=dQw4w9WgXcQ`",
-                parse_mode='Markdown'
+                f"{EMOJIS['warning']} <b>Usage:</b> <code>/song youtube_url</code>\n\nExample: <code>/song https://youtube.com/watch?v=dQw4w9WgXcQ</code>",
+                parse_mode='HTML'
             )
             return
         
@@ -254,8 +265,8 @@ def handle_song(message):
         if not ('youtube.com' in url or 'youtu.be' in url):
             bot.reply_to(
                 message,
-                f"{EMOJIS['error']} **Invalid URL!**\nPlease provide a valid YouTube URL.",
-                parse_mode='Markdown'
+                f"{EMOJIS['error']} <b>Invalid URL!</b>\nPlease provide a valid YouTube URL.",
+                parse_mode='HTML'
             )
             return
         
@@ -266,25 +277,25 @@ def handle_song(message):
         result = download_youtube_audio(url)
         if not result or not result[0]:
             bot.edit_message_text(
-                f"{EMOJIS['error']} **Download Failed!**\nUnable to process the audio. Please check the URL and try again.",
+                f"{EMOJIS['error']} <b>Download Failed!</b>\nUnable to process the audio. Please check the URL and try again.",
                 chat_id=message.chat.id,
                 message_id=processing_msg.message_id,
-                parse_mode='Markdown'
+                parse_mode='HTML'
             )
             return
         
         file_path, song_name, channel_name = result
         
-        # Prepare caption
+        # Prepare caption (escape HTML special characters)
         caption = f"""
-{EMOJIS['music']} **{song_name[:100]}**
+{EMOJIS['music']} <b>{escape_html(song_name[:100])}</b>
 
-{EMOJIS['youtube']} **Channel:** {channel_name}
+{EMOJIS['youtube']} <b>Channel:</b> {escape_html(channel_name)}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{EMOJIS['owner']} **Owner:** @Nobody_ax
-{EMOJIS['download']} **Downloaded with:** @UltimateMediaBot
+{EMOJIS['owner']} <b>Owner:</b> @Nobody_ax
+{EMOJIS['download']} <b>Downloaded with:</b> @UltimateMediaBot
 """
         
         # Delete processing message
@@ -296,7 +307,7 @@ def handle_song(message):
                 message.chat.id,
                 audio,
                 caption=caption,
-                parse_mode='Markdown',
+                parse_mode='HTML',
                 title=song_name[:50],
                 performer=channel_name[:50]
             )
@@ -307,8 +318,8 @@ def handle_song(message):
     except Exception as e:
         bot.reply_to(
             message,
-            f"{EMOJIS['error']} **Unexpected Error:**\n`{str(e)[:100]}`\n\nPlease try again later.",
-            parse_mode='Markdown'
+            f"{EMOJIS['error']} <b>Unexpected Error:</b>\n<code>{escape_html(str(e)[:100])}</code>\n\nPlease try again later.",
+            parse_mode='HTML'
         )
         print(f"Song command error: {e}")
 
@@ -321,8 +332,8 @@ def handle_ytvideo(message):
         if len(command_parts) < 2:
             bot.reply_to(
                 message,
-                f"{EMOJIS['warning']} **Usage:** `/ytvideo youtube_url`\n\nExample: `/ytvideo https://youtube.com/watch?v=dQw4w9WgXcQ`",
-                parse_mode='Markdown'
+                f"{EMOJIS['warning']} <b>Usage:</b> <code>/ytvideo youtube_url</code>\n\nExample: <code>/ytvideo https://youtube.com/watch?v=dQw4w9WgXcQ</code>",
+                parse_mode='HTML'
             )
             return
         
@@ -332,8 +343,8 @@ def handle_ytvideo(message):
         if not ('youtube.com' in url or 'youtu.be' in url):
             bot.reply_to(
                 message,
-                f"{EMOJIS['error']} **Invalid URL!**\nPlease provide a valid YouTube URL.",
-                parse_mode='Markdown'
+                f"{EMOJIS['error']} <b>Invalid URL!</b>\nPlease provide a valid YouTube URL.",
+                parse_mode='HTML'
             )
             return
         
@@ -344,25 +355,25 @@ def handle_ytvideo(message):
         result = download_youtube_video(url)
         if not result or not result[0]:
             bot.edit_message_text(
-                f"{EMOJIS['error']} **Download Failed!**\nUnable to process the video. Please check the URL and try again.",
+                f"{EMOJIS['error']} <b>Download Failed!</b>\nUnable to process the video. Please check the URL and try again.",
                 chat_id=message.chat.id,
                 message_id=processing_msg.message_id,
-                parse_mode='Markdown'
+                parse_mode='HTML'
             )
             return
         
         file_path, video_title, channel_name = result
         
-        # Prepare caption
+        # Prepare caption (escape HTML special characters)
         caption = f"""
-{EMOJIS['video']} **{video_title[:100]}**
+{EMOJIS['video']} <b>{escape_html(video_title[:100])}</b>
 
-{EMOJIS['youtube']} **Channel:** {channel_name}
+{EMOJIS['youtube']} <b>Channel:</b> {escape_html(channel_name)}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{EMOJIS['owner']} **Owner:** @Nobody_ax
-{EMOJIS['download']} **Downloaded with:** @UltimateMediaBot
+{EMOJIS['owner']} <b>Owner:</b> @Nobody_ax
+{EMOJIS['download']} <b>Downloaded with:</b> @UltimateMediaBot
 """
         
         # Delete processing message
@@ -374,7 +385,7 @@ def handle_ytvideo(message):
                 message.chat.id,
                 video,
                 caption=caption,
-                parse_mode='Markdown',
+                parse_mode='HTML',
                 supports_streaming=True
             )
         
@@ -384,8 +395,8 @@ def handle_ytvideo(message):
     except Exception as e:
         bot.reply_to(
             message,
-            f"{EMOJIS['error']} **Unexpected Error:**\n`{str(e)[:100]}`\n\nPlease try again later.",
-            parse_mode='Markdown'
+            f"{EMOJIS['error']} <b>Unexpected Error:</b>\n<code>{escape_html(str(e)[:100])}</code>\n\nPlease try again later.",
+            parse_mode='HTML'
         )
         print(f"Video command error: {e}")
 
@@ -398,8 +409,8 @@ def handle_ttvideo(message):
         if len(command_parts) < 2:
             bot.reply_to(
                 message,
-                f"{EMOJIS['warning']} **Usage:** `/ttvideo tiktok_url`\n\nExample: `/ttvideo https://tiktok.com/@user/video/123456789`",
-                parse_mode='Markdown'
+                f"{EMOJIS['warning']} <b>Usage:</b> <code>/ttvideo tiktok_url</code>\n\nExample: <code>/ttvideo https://tiktok.com/@user/video/123456789</code>",
+                parse_mode='HTML'
             )
             return
         
@@ -409,8 +420,8 @@ def handle_ttvideo(message):
         if not ('tiktok.com' in url or 'vt.tiktok.com' in url):
             bot.reply_to(
                 message,
-                f"{EMOJIS['error']} **Invalid URL!**\nPlease provide a valid TikTok URL.",
-                parse_mode='Markdown'
+                f"{EMOJIS['error']} <b>Invalid URL!</b>\nPlease provide a valid TikTok URL.",
+                parse_mode='HTML'
             )
             return
         
@@ -421,25 +432,25 @@ def handle_ttvideo(message):
         result = download_tiktok_video(url)
         if not result or not result[0]:
             bot.edit_message_text(
-                f"{EMOJIS['error']} **Download Failed!**\nUnable to process the TikTok video. The video might be private or unavailable.\n\n{EMOJIS['info']} **Note:** Some TikTok videos may require login credentials.",
+                f"{EMOJIS['error']} <b>Download Failed!</b>\nUnable to process the TikTok video. The video might be private or unavailable.\n\n{EMOJIS['info']} <b>Note:</b> Some TikTok videos may require login credentials.",
                 chat_id=message.chat.id,
                 message_id=processing_msg.message_id,
-                parse_mode='Markdown'
+                parse_mode='HTML'
             )
             return
         
         file_path, author = result
         
-        # Prepare caption
+        # Prepare caption (escape HTML special characters)
         caption = f"""
-{EMOJIS['tiktok']} **TikTok Video**
+{EMOJIS['tiktok']} <b>TikTok Video</b>
 
-{EMOJIS['info']} **Author:** @{author}
+{EMOJIS['info']} <b>Author:</b> @{escape_html(author)}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{EMOJIS['owner']} **Owner:** @Nobody_ax
-{EMOJIS['download']} **Downloaded with:** @UltimateMediaBot
+{EMOJIS['owner']} <b>Owner:</b> @Nobody_ax
+{EMOJIS['download']} <b>Downloaded with:</b> @UltimateMediaBot
 """
         
         # Delete processing message
@@ -451,7 +462,7 @@ def handle_ttvideo(message):
                 message.chat.id,
                 video,
                 caption=caption,
-                parse_mode='Markdown',
+                parse_mode='HTML',
                 supports_streaming=True
             )
         
@@ -461,8 +472,8 @@ def handle_ttvideo(message):
     except Exception as e:
         bot.reply_to(
             message,
-            f"{EMOJIS['error']} **Unexpected Error:**\n`{str(e)[:100]}`\n\nPlease try again later.",
-            parse_mode='Markdown'
+            f"{EMOJIS['error']} <b>Unexpected Error:</b>\n<code>{escape_html(str(e)[:100])}</code>\n\nPlease try again later.",
+            parse_mode='HTML'
         )
         print(f"TikTok command error: {e}")
 
@@ -473,8 +484,8 @@ def handle_unknown(message):
     """Handle unknown messages"""
     bot.reply_to(
         message,
-        f"{EMOJIS['warning']} **Unknown Command!**\n\nUse /start to see available commands or tap the **𝘼𝙇𝙇 𝘾𝙤𝙢𝙢𝙖𝙣𝙙'𝙨 - 📋** button.\n\n{EMOJIS['owner']} **Owner:** @Nobody_ax",
-        parse_mode='Markdown'
+        f"{EMOJIS['warning']} <b>Unknown Command!</b>\n\nUse /start to see available commands or tap the <b>𝘼𝙇𝙇 𝘾𝙤𝙢𝙢𝙖𝙣𝙙'𝙨 - 📋</b> button.\n\n{EMOJIS['owner']} <b>Owner:</b> @Nobody_ax",
+        parse_mode='HTML'
     )
 
 # ============= MAIN =============
@@ -486,5 +497,10 @@ if __name__ == '__main__':
     print("📱 TikTok Downloader Ready")
     print("✅ Bot is running...")
     
-    # Start polling
-    bot.infinity_polling(timeout=60, long_polling_timeout=60)
+    # Start polling with error handling
+    while True:
+        try:
+            bot.infinity_polling(timeout=60, long_polling_timeout=60)
+        except Exception as e:
+            print(f"Polling error: {e}")
+            time.sleep(5)
