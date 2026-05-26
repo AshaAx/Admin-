@@ -1,8 +1,12 @@
-# main.py
+"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 AX Professional Downloader Bot
+👑 Owner : @Nobody_ax
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
 
 import os
 import time
-import shutil
 import tempfile
 import telebot
 import yt_dlp
@@ -10,23 +14,28 @@ import yt_dlp
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 # =====================================================
-# BOT CONFIG
+# FIX YT-DLP BUG MESSAGE
 # =====================================================
 
-BOT_TOKEN = os.environ["BOT_TOKEN"]
-
-bot = telebot.TeleBot(
-    BOT_TOKEN,
-    parse_mode="HTML"
-)
+yt_dlp.utils.bug_reports_message = lambda: ""
 
 # =====================================================
-# REMOVE OLD WEBHOOK
+# BOT TOKEN
+# =====================================================
+
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+
+if not BOT_TOKEN:
+    raise Exception("BOT_TOKEN not found!")
+
+bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
+
+# =====================================================
+# REMOVE WEBHOOK
 # =====================================================
 
 try:
     bot.remove_webhook()
-    time.sleep(2)
     print("✅ Webhook Removed")
 except Exception as e:
     print(e)
@@ -35,53 +44,42 @@ except Exception as e:
 # KEYBOARD
 # =====================================================
 
-def keyboard():
-
+def main_keyboard():
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-
-    kb.add(
-        KeyboardButton("𝘼𝙇𝙇 𝘾𝙤𝙢𝙢𝙖𝙣𝙙'𝙨 - 📋")
-    )
-
+    kb.add(KeyboardButton("𝘼𝙇𝙇 𝘾𝙤𝙢𝙢𝙖𝙣𝙙'𝙨 - 📋"))
     return kb
 
 # =====================================================
 # SAFE DELETE
 # =====================================================
 
-def cleanup(folder):
-
+def safe_delete(file_path):
     try:
-        shutil.rmtree(folder)
+        if file_path and os.path.exists(file_path):
+            os.remove(file_path)
     except:
         pass
 
 # =====================================================
-# YOUTUBE AUDIO DOWNLOAD
+# DOWNLOAD AUDIO
 # =====================================================
 
-def yt_audio(url):
+def download_audio(url):
 
     temp_dir = tempfile.mkdtemp()
 
     ydl_opts = {
-
-        "format": "bestaudio/best",
-
+        "format": "bestaudio[ext=m4a]/bestaudio/best",
         "outtmpl": f"{temp_dir}/%(title)s.%(ext)s",
-
+        "ffmpeg_location": "/usr/bin",
         "quiet": True,
-
         "noplaylist": True,
-
-        "cookiefile": None,
-
+        "nocheckcertificate": True,
         "extractor_args": {
             "youtube": {
                 "player_client": ["android"]
             }
         },
-
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
@@ -89,24 +87,12 @@ def yt_audio(url):
         }]
     }
 
-    try:
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=True)
 
-            info = ydl.extract_info(
-                url,
-                download=True
-            )
-
-            title = info.get(
-                "title",
-                "Unknown"
-            )
-
-            uploader = info.get(
-                "uploader",
-                "Unknown"
-            )
+        title = info.get("title", "Unknown")
+        uploader = info.get("uploader", "Unknown")
 
         for file in os.listdir(temp_dir):
 
@@ -115,40 +101,26 @@ def yt_audio(url):
                 return (
                     os.path.join(temp_dir, file),
                     title,
-                    uploader,
-                    temp_dir
+                    uploader
                 )
 
-    except Exception as e:
-
-        print(e)
-
-    cleanup(temp_dir)
-
-    return None, None, None, None
+    return None, None, None
 
 # =====================================================
-# YOUTUBE VIDEO DOWNLOAD
+# DOWNLOAD YOUTUBE VIDEO
 # =====================================================
 
-def yt_video(url):
+def download_video(url):
 
     temp_dir = tempfile.mkdtemp()
 
     ydl_opts = {
-
-        "format": "best[height<=480]",
-
+        "format": "best[ext=mp4][height<=720]",
         "outtmpl": f"{temp_dir}/%(title)s.%(ext)s",
-
         "quiet": True,
-
-        "merge_output_format": "mp4",
-
         "noplaylist": True,
-
-        "cookiefile": None,
-
+        "merge_output_format": "mp4",
+        "nocheckcertificate": True,
         "extractor_args": {
             "youtube": {
                 "player_client": ["android"]
@@ -156,24 +128,12 @@ def yt_video(url):
         }
     }
 
-    try:
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=True)
 
-            info = ydl.extract_info(
-                url,
-                download=True
-            )
-
-            title = info.get(
-                "title",
-                "Unknown"
-            )
-
-            uploader = info.get(
-                "uploader",
-                "Unknown"
-            )
+        title = info.get("title", "Unknown")
+        uploader = info.get("uploader", "Unknown")
 
         for file in os.listdir(temp_dir):
 
@@ -182,52 +142,32 @@ def yt_video(url):
                 return (
                     os.path.join(temp_dir, file),
                     title,
-                    uploader,
-                    temp_dir
+                    uploader
                 )
 
-    except Exception as e:
-
-        print(e)
-
-    cleanup(temp_dir)
-
-    return None, None, None, None
+    return None, None, None
 
 # =====================================================
-# TIKTOK DOWNLOAD
+# DOWNLOAD TIKTOK
 # =====================================================
 
-def tt_video(url):
+def download_tiktok(url):
 
     temp_dir = tempfile.mkdtemp()
 
     ydl_opts = {
-
         "format": "best",
-
         "outtmpl": f"{temp_dir}/%(title)s.%(ext)s",
-
         "quiet": True,
-
-        "merge_output_format": "mp4",
-
-        "noplaylist": True
+        "noplaylist": True,
+        "merge_output_format": "mp4"
     }
 
-    try:
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=True)
 
-            info = ydl.extract_info(
-                url,
-                download=True
-            )
-
-            uploader = info.get(
-                "uploader",
-                "Unknown"
-            )
+        uploader = info.get("uploader", "Unknown")
 
         for file in os.listdir(temp_dir):
 
@@ -235,17 +175,10 @@ def tt_video(url):
 
                 return (
                     os.path.join(temp_dir, file),
-                    uploader,
-                    temp_dir
+                    uploader
                 )
 
-    except Exception as e:
-
-        print(e)
-
-    cleanup(temp_dir)
-
-    return None, None, None
+    return None, None
 
 # =====================================================
 # START
@@ -259,11 +192,9 @@ def start(message):
 
 ━━━━━━━━━━━━━━━━━━
 
-🎵 Download YouTube Songs
-🎬 Download YouTube Videos
-📱 Download TikTok Videos
-
-⚡ Fast • Clean • Professional
+🎵 YouTube → MP3
+🎬 YouTube → Video
+📱 TikTok → Video
 
 ━━━━━━━━━━━━━━━━━━
 
@@ -272,6 +203,7 @@ def start(message):
 /song youtube_link
 /ytvideo youtube_link
 /ttvideo tiktok_link
+/ping
 
 ━━━━━━━━━━━━━━━━━━
 
@@ -281,40 +213,25 @@ def start(message):
     bot.reply_to(
         message,
         text,
-        reply_markup=keyboard()
+        reply_markup=main_keyboard()
     )
 
 # =====================================================
-# ALL COMMANDS
+# COMMAND LIST
 # =====================================================
 
-@bot.message_handler(
-    func=lambda m: m.text == "𝘼𝙇𝙇 𝘾𝙤𝙢𝙢𝙖𝙣𝙙'𝙨 - 📋"
-)
-def commands(message):
+@bot.message_handler(func=lambda m: m.text == "𝘼𝙇𝙇 𝘾𝙤𝙢𝙢𝙖𝙣𝙙'𝙨 - 📋")
+def commands_list(message):
 
     text = """
-⚡ <b>ALL COMMANDS</b>
+📋 <b>ALL COMMANDS</b>
 
 ━━━━━━━━━━━━━━━━━━
 
-🎵 /song youtube_link
-➜ Download YouTube MP3
-
-━━━━━━━━━━━━━━━━━━
-
-🎬 /ytvideo youtube_link
-➜ Download YouTube Video
-
-━━━━━━━━━━━━━━━━━━
-
-📱 /ttvideo tiktok_link
-➜ Download TikTok Video
-
-━━━━━━━━━━━━━━━━━━
-
+🎵 /song youtube_url
+🎬 /ytvideo youtube_url
+📱 /ttvideo tiktok_url
 🏓 /ping
-➜ Check Bot Status
 
 ━━━━━━━━━━━━━━━━━━
 
@@ -332,7 +249,7 @@ def ping(message):
 
     bot.reply_to(
         message,
-        "🏓 <b>Bot Online!</b>"
+        "🏓 <b>Bot Online & Working!</b>"
     )
 
 # =====================================================
@@ -344,9 +261,7 @@ def song(message):
 
     try:
 
-        args = message.text.split(
-            maxsplit=1
-        )
+        args = message.text.split(maxsplit=1)
 
         if len(args) < 2:
 
@@ -354,7 +269,6 @@ def song(message):
                 message,
                 "⚠️ Usage:\n<code>/song youtube_url</code>"
             )
-
             return
 
         url = args[1]
@@ -364,7 +278,7 @@ def song(message):
             "🔄 Downloading audio..."
         )
 
-        file_path, title, uploader, folder = yt_audio(url)
+        file_path, title, uploader = download_audio(url)
 
         if not file_path:
 
@@ -373,7 +287,6 @@ def song(message):
                 message.chat.id,
                 msg.message_id
             )
-
             return
 
         bot.edit_message_text(
@@ -383,9 +296,9 @@ def song(message):
         )
 
         caption = f"""
-🎵 <b>{title[:70]}</b>
+🎵 <b>{title}</b>
 
-📺 Channel : {uploader[:40]}
+📺 Channel : {uploader}
 
 ━━━━━━━━━━━━━━━━━━
 
@@ -398,11 +311,11 @@ def song(message):
                 message.chat.id,
                 audio,
                 caption=caption,
-                title=title[:50],
-                performer=uploader[:50]
+                title=title,
+                performer=uploader
             )
 
-        cleanup(folder)
+        safe_delete(file_path)
 
         bot.delete_message(
             message.chat.id,
@@ -413,7 +326,7 @@ def song(message):
 
         bot.reply_to(
             message,
-            f"❌ Error:\n<code>{str(e)[:150]}</code>"
+            f"❌ Error:\n<code>{str(e)[:300]}</code>"
         )
 
 # =====================================================
@@ -425,9 +338,7 @@ def ytvideo(message):
 
     try:
 
-        args = message.text.split(
-            maxsplit=1
-        )
+        args = message.text.split(maxsplit=1)
 
         if len(args) < 2:
 
@@ -435,7 +346,6 @@ def ytvideo(message):
                 message,
                 "⚠️ Usage:\n<code>/ytvideo youtube_url</code>"
             )
-
             return
 
         url = args[1]
@@ -445,7 +355,7 @@ def ytvideo(message):
             "🔄 Downloading video..."
         )
 
-        file_path, title, uploader, folder = yt_video(url)
+        file_path, title, uploader = download_video(url)
 
         if not file_path:
 
@@ -454,7 +364,6 @@ def ytvideo(message):
                 message.chat.id,
                 msg.message_id
             )
-
             return
 
         bot.edit_message_text(
@@ -464,9 +373,9 @@ def ytvideo(message):
         )
 
         caption = f"""
-🎬 <b>{title[:70]}</b>
+🎬 <b>{title}</b>
 
-📺 Channel : {uploader[:40]}
+📺 Channel : {uploader}
 
 ━━━━━━━━━━━━━━━━━━
 
@@ -482,7 +391,7 @@ def ytvideo(message):
                 supports_streaming=True
             )
 
-        cleanup(folder)
+        safe_delete(file_path)
 
         bot.delete_message(
             message.chat.id,
@@ -493,7 +402,7 @@ def ytvideo(message):
 
         bot.reply_to(
             message,
-            f"❌ Error:\n<code>{str(e)[:150]}</code>"
+            f"❌ Error:\n<code>{str(e)[:300]}</code>"
         )
 
 # =====================================================
@@ -505,9 +414,7 @@ def ttvideo(message):
 
     try:
 
-        args = message.text.split(
-            maxsplit=1
-        )
+        args = message.text.split(maxsplit=1)
 
         if len(args) < 2:
 
@@ -515,17 +422,16 @@ def ttvideo(message):
                 message,
                 "⚠️ Usage:\n<code>/ttvideo tiktok_url</code>"
             )
-
             return
 
         url = args[1]
 
         msg = bot.reply_to(
             message,
-            "🔄 Downloading TikTok video..."
+            "🔄 Downloading TikTok..."
         )
 
-        file_path, uploader, folder = tt_video(url)
+        file_path, uploader = download_tiktok(url)
 
         if not file_path:
 
@@ -534,11 +440,10 @@ def ttvideo(message):
                 message.chat.id,
                 msg.message_id
             )
-
             return
 
         bot.edit_message_text(
-            "⬆️ Uploading TikTok video...",
+            "⬆️ Uploading TikTok...",
             message.chat.id,
             msg.message_id
         )
@@ -546,7 +451,7 @@ def ttvideo(message):
         caption = f"""
 📱 <b>TikTok Video</b>
 
-👤 Creator : @{uploader[:40]}
+👤 Creator : @{uploader}
 
 ━━━━━━━━━━━━━━━━━━
 
@@ -562,7 +467,7 @@ def ttvideo(message):
                 supports_streaming=True
             )
 
-        cleanup(folder)
+        safe_delete(file_path)
 
         bot.delete_message(
             message.chat.id,
@@ -573,7 +478,7 @@ def ttvideo(message):
 
         bot.reply_to(
             message,
-            f"❌ Error:\n<code>{str(e)[:150]}</code>"
+            f"❌ Error:\n<code>{str(e)[:300]}</code>"
         )
 
 # =====================================================
@@ -589,7 +494,7 @@ def unknown(message):
     )
 
 # =====================================================
-# RUN BOT
+# RUN
 # =====================================================
 
 print("🚀 AX Downloader Bot Running...")
